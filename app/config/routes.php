@@ -58,8 +58,18 @@ $router->get('/reaction-client/liste-reaction-pending', [$reactionClientControll
 $router->post('/reaction-client/accepter-reaction', [$reactionClientController, 'validerReaction']);
 $router->post('/reaction-client/refuser-reaction', [$reactionClientController, 'refuserReaction']);
 $router->get('/reaction-client/effectuer-reaction', [$reactionClientController, 'showEffectuerReactionForm']);
+
+// New Routes for Type Reactions
+$router->post('/reaction-client/type-reaction/save', [$reactionClientController, 'saveTypeReaction']);
+$router->post('/reaction-client/type-reaction/delete', [$reactionClientController, 'deleteTypeReaction']);
+
+// New Routes for Reactions
+$router->post('/reaction-client/reaction/save', [$reactionClientController, 'saveReaction']);
+$router->post('/reaction-client/reaction/delete', [$reactionClientController, 'deleteReaction']);
+
 $reactionImpactController = new app\controllers\ReactionImpactController();
 $router->get('/reaction-impact', [$reactionImpactController, 'showImpact']);
+
 
 $homeController = new app\controllers\HomeController();
 $router->get('/home', [$homeController, 'getHome']);

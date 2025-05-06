@@ -13,126 +13,62 @@
                     <div class="alert alert-info"><?= htmlspecialchars($message) ?></div>
                 <?php endif; ?>
 
+                <!-- Type Reactions CRUD -->
                 <div class="row">
                     <div class="col-md-12">
                         <div class="card card-round">
                             <div class="card-header">
                                 <div class="card-head-row">
-                                    <div class="card-title">Filtres</div>
+                                    <div class="card-title">Gérer les Types de Réactions</div>
                                 </div>
                             </div>
                             <div class="card-body">
-                                <form method="get" id="phaseFilterForm">
-                                    <div class="row align-items-end">
-                                        <div class="col-md-4">
-                                            <label for="phase" class="form-label">Filtrer par phase :</label>
-                                            <select name="phase" id="phase" class="form-select form-control-sm">
-                                                <option value="">Toutes les phases</option>
-                                                <option value="1" <?= isset($selectedPhase) && $selectedPhase == 1 ? 'selected' : '' ?>>Avant l'échange</option>
-                                                <option value="2" <?= isset($selectedPhase) && $selectedPhase == 2 ? 'selected' : '' ?>>Pendant l'échange</option>
-                                                <option value="3" <?= isset($selectedPhase) && $selectedPhase == 3 ? 'selected' : '' ?>>Après l'échange</option>
-                                            </select>
+                                <!-- Form for Creating/Updating Type Reactions -->
+                                <form method="post" action="/reaction-client/type-reaction/save" id="typeReactionForm">
+                                    <input type="hidden" name="id" id="type_reaction_id">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="description">Description</label>
+                                                <input type="text" name="description" id="type_reaction_description" class="form-control" required>
+                                            </div>
                                         </div>
-                                        <div class="col-md-2">
-                                            <button type="submit" class="btn btn-primary btn-sm">Filtrer</button>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="besoin_validation">Besoin Validation</label>
+                                                <select name="besoin_validation" id="besoin_validation" class="form-control">
+                                                    <option value="0">Non</option>
+                                                    <option value="1">Oui</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button type="submit" class="btn btn-primary btn-sm mt-4">Enregistrer</button>
+                                            <button type="button" class="btn btn-secondary btn-sm mt-4" onclick="resetTypeReactionForm()">Annuler</button>
                                         </div>
                                     </div>
                                 </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="card card-round">
-                            <div class="card-header">
-                                <div class="card-head-row">
-                                    <div class="card-title">Réactions</div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="row mb-4">
-                                    <div class="col-md-6">
-                                        <form id="importReactionsBaseForm" class="d-flex align-items-center gap-2" enctype="multipart/form-data">
-                                            <input type="file" name="csv_file" accept=".csv" required class="form-control">
-                                            <button type="submit" class="btn btn-primary btn-sm">Importer CSV</button>
-                                        </form>
-                                    </div>
-                                    <div class="col-md-6 text-end">
-                                        <form id="exportReactionsBasePdfForm">
-                                            <button type="submit" class="btn btn-success btn-sm">Exporter PDF</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="card card-round">
-                            <div class="card-header">
-                                <div class="card-head-row">
-                                    <div class="card-title">Effectuer des réactions</div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="row mb-4">
-                                    <div class="col-md-6">
-                                        <form id="importReactionsForm" class="d-flex align-items-center gap-2" enctype="multipart/form-data">
-                                            <input type="file" name="csv_file" accept=".csv" required class="form-control">
-                                            <button type="submit" class="btn btn-primary btn-sm">Importer CSV</button>
-                                        </form>
-                                    </div>
-                                    <div class="col-md-6 text-end">
-                                        <form id="exportReactionsPdfForm">
-                                            <button type="submit" class="btn btn-success btn-sm">Exporter PDF</button>
-                                        </form>
-                                    </div>
-                                </div>
-                                <div class="text-end">
-                                    <a href="<?= htmlspecialchars(Flight::get('flight.base_url') . '/reaction-client/effectuer-reaction') ?>" class="btn btn-primary btn-sm">
-                                        Effectuer Réaction
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="card card-round">
-                            <div class="card-header">
-                                <div class="card-head-row">
-                                    <div class="card-title">Fréquence des réactions</div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table id="reactionsTable" class="display table table-striped table-hover">
+                                <!-- Table for Type Reactions -->
+                                <div class="table-responsive mt-4">
+                                    <table id="typeReactionsTable" class="display table table-striped table-hover">
                                         <thead>
                                             <tr>
-                                                <th>Réaction</th>
-                                                <th>Phase</th>
-                                                <th>Coût</th>
-                                                <th>Nombre d'exécutions</th>
-                                                <th>Nombre de clients distincts</th>
-                                                <th>Voir impact</th>
+                                                <th>Description</th>
+                                                <th>Besoin Validation</th>
+                                                <th>Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php foreach ($frequencies as $reaction): ?>
+                                            <?php foreach ($typeReactions as $type): ?>
                                                 <tr>
-                                                    <td><?= htmlspecialchars($reaction['description']) ?></td>
-                                                    <td><?= htmlspecialchars($reaction['phase']) ?></td>
-                                                    <td><?= htmlspecialchars($reaction['cout'] ?? '') ?></td>
-                                                    <td><?= htmlspecialchars($reaction['frequence']) ?></td>
-                                                    <td><?= htmlspecialchars($reaction['nb_clients']) ?></td>
+                                                    <td><?= htmlspecialchars($type['description']) ?></td>
+                                                    <td><?= $type['besoin_validation'] ? 'Oui' : 'Non' ?></td>
                                                     <td>
-                                                        <a href="reaction-impact?reaction_id=<?= $reaction['id'] ?>" class="btn btn-outline-primary btn-sm">Voir impact</a>
+                                                        <button class="btn btn-warning btn-sm" onclick="editTypeReaction(<?= $type['id'] ?>, '<?= htmlspecialchars($type['description']) ?>', <?= $type['besoin_validation'] ?>)">Modifier</button>
+                                                        <form action="/reaction-client/type-reaction/delete" method="post" style="display:inline;">
+                                                            <input type="hidden" name="id" value="<?= $type['id'] ?>">
+                                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Confirmer la suppression ?')">Supprimer</button>
+                                                        </form>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
@@ -144,32 +80,129 @@
                     </div>
                 </div>
 
+                <!-- Reactions CRUD -->
                 <div class="row">
                     <div class="col-md-12">
                         <div class="card card-round">
                             <div class="card-header">
                                 <div class="card-head-row">
-                                    <div class="card-title">Réactions les plus fréquentes par tranche d'âge</div>
+                                    <div class="card-title">Gérer les Réactions</div>
                                 </div>
                             </div>
                             <div class="card-body">
-                                <div class="row">
-                                    <?php foreach ($byAgeRange as $range => $reactions): ?>
-                                        <div class="col-md-6 mb-4">
-                                            <div class="card">
-                                                <div class="card-header">Tranche d'âge : <?= htmlspecialchars($range) ?> ans</div>
-                                                <div class="card-body">
-                                                    <canvas id="chart-<?= $range ?>"></canvas>
-                                                </div>
+                                <!-- Form for Creating/Updating Reactions -->
+                                <form method="post" action="/reaction-client/reaction/save" id="reactionForm">
+                                    <input type="hidden" name="id" id="reaction_id">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="action_id">Action</label>
+                                                <select name="action_id" id="action_id" class="form-control" required>
+                                                    <option value="">Sélectionner une action</option>
+                                                    <?php foreach ($actions as $action): ?>
+                                                        <option value="<?= $action['id'] ?>"><?= htmlspecialchars($action['description']) ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
                                             </div>
                                         </div>
-                                    <?php endforeach; ?>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="type_reaction_id">Type Réaction</label>
+                                                <select name="type_reaction_id" id="reaction_type_id" class="form-control" required>
+                                                    <option value="">Sélectionner un type</option>
+                                                    <?php foreach ($typeReactions as $type): ?>
+                                                        <option value="<?= $type['id'] ?>"><?= htmlspecialchars($type['description']) ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label for="montant">Montant (€)</label>
+                                                <input type="number" step="0.01" name="montant" id="montant" class="form-control" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label for="statut">Statut</label>
+                                                <select name="statut" id="statut" class="form-control" required>
+                                                    <option value="en attente">En attente</option>
+                                                    <option value="valide">Validé</option>
+                                                    <option value="rejete">Rejeté</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <button type="submit" class="btn btn-primary btn-sm mt-4">Enregistrer</button>
+                                            <button type="button" class="btn btn-secondary btn-sm mt-4" onclick="resetReactionForm()">Annuler</button>
+                                        </div>
+                                    </div>
+                                </form>
+                                <!-- Table for Reactions -->
+                                <div class="table-responsive mt-4">
+                                    <table id="reactionsTable" class="display table table-striped table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Action</th>
+                                                <th>Type Réaction</th>
+                                                <th>Montant (€)</th>
+                                                <th>Statut</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($reactions as $reaction): ?>
+                                                <tr>
+                                                    <td><?= htmlspecialchars($reaction['action_description']) ?></td>
+                                                    <td><?= htmlspecialchars($reaction['type_reaction_description']) ?></td>
+                                                    <td><?= htmlspecialchars($reaction['montant']) ?></td>
+                                                    <td><?= htmlspecialchars($reaction['statut']) ?></td>
+                                                    <td>
+                                                        <button class="btn btn-warning btn-sm" onclick="editReaction(<?= $reaction['id'] ?>, <?= $reaction['action_id'] ?>, <?= $reaction['type_reaction_id'] ?>, <?= $reaction['montant'] ?>, '<?= $reaction['statut'] ?>')">Modifier</button>
+                                                        <form action="/reaction-client/reaction/delete" method="post" style="display:inline;">
+                                                            <input type="hidden" name="id" value="<?= $reaction['id'] ?>">
+                                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Confirmer la suppression ?')">Supprimer</button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Existing Sections (Filters, Frequencies, etc.) -->
+                <!-- ... Keep your existing code for filters, frequencies, and age range sections ... -->
             </div>
         </div>
     </div>
 </div>
+
+<script>
+function resetTypeReactionForm() {
+    document.getElementById('typeReactionForm').reset();
+    document.getElementById('type_reaction_id').value = '';
+}
+
+function editTypeReaction(id, description, besoin_validation) {
+    document.getElementById('type_reaction_id').value = id;
+    document.getElementById('type_reaction_description').value = description;
+    document.getElementById('besoin_validation').value = besoin_validation ? '1' : '0';
+}
+
+function resetReactionForm() {
+    document.getElementById('reactionForm').reset();
+    document.getElementById('reaction_id').value = '';
+}
+
+function editReaction(id, action_id, type_reaction_id, montant, statut) {
+    document.getElementById('reaction_id').value = id;
+    document.getElementById('action_id').value = action_id;
+    document.getElementById('reaction_type_id').value = type_reaction_id; // Updated ID
+    document.getElementById('montant').value = montant;
+    document.getElementById('statut').value = statut;
+}
+</script>

@@ -6,19 +6,115 @@ class ReactionClientController {
     public function showReactionStats() {
         $phase = (isset($_GET['phase']) && $_GET['phase'] !== '') ? (int)$_GET['phase'] : null;
         $reactionModel = Flight::reactionModel();
+        $generaliserModel = Flight::generaliserModel();
+
+        // Get data for type_reactions
+        $typeReactions = $generaliserModel->getTableData('type_reactions', []);
+
+        // Get data for actions
+        $actions = $generaliserModel->getTableData('actions', []);
+
+        // Get data for reactions with joined action and type_reaction descriptions
+        $join = [
+            ['actions', [['reactions.action_id', 'actions.id']]],
+            ['type_reactions', [['reactions.type_reaction_id', 'type_reactions.id']]]
+        ];
+        $reactions = $generaliserModel->getTableData('reactions', [], [], $join);
+        // Add descriptions to reactions for display
+        foreach ($reactions as &$reaction) {
+            $reaction['action_description'] = $reaction['actions_description'] ?? '';
+            $reaction['type_reaction_description'] = $reaction['type_reactions_description'] ?? '';
+        }
+
         $frequencies = $reactionModel->getReactionFrequencies($phase);
         $byAgeRange = $reactionModel->getReactionFrequenciesByAgeRange($phase);
 
-        
         Flight::render('template', [
             'pageName' => 'reaction_client',
             'pageTitle' => 'Statistiques Réactions Clients',
             'frequencies' => $frequencies,
             'byAgeRange' => $byAgeRange,
-            'selectedPhase' => $phase
+            'selectedPhase' => $phase,
+            'typeReactions' => $typeReactions,
+            'actions' => $actions,
+            'reactions' => $reactions
         ]);
     }
 
+    // CRUD for Type Reactions
+    public function saveTypeReaction() {
+        $generaliserModel = Flight::generaliserModel();
+        $data = [
+            'description' => $_POST['description'] ?? '',
+            'besoin_validation' => isset($_POST['besoin_validation']) ? (int)$_POST['besoin_validation'] : 0
+        ];
+
+        try {
+            if (!empty($_POST['id'])) {
+                // Update
+                $generaliserModel->updateTableData('type_reactions', $data, ['id' => (int)$_POST['id']]);
+                Flight::set('message', 'Type de réaction mis à jour avec succès.');
+            } else {
+                // Create
+                $generaliserModel->insererDonnee('type_reactions', $data);
+                Flight::set('message', 'Type de réaction créé avec succès.');
+            }
+        } catch (\Exception $e) {
+            Flight::set('message', 'Erreur : ' . $e->getMessage());
+        }
+        Flight::redirect('/reaction-client');
+    }
+
+    public function deleteTypeReaction() {
+        $generaliserModel = Flight::generaliserModel();
+        try {
+            $generaliserModel->deleteTableData('type_reactions', ['id' => (int)$_POST['id']]);
+            Flight::set('message', 'Type de réaction supprimé avec succès.');
+        } catch (\Exception $e) {
+            Flight::set('message', 'Erreur : ' . $e->getMessage());
+        }
+        Flight::redirect('/reaction-client');
+    }
+
+    // CRUD for Reactions
+    public function saveReaction() {
+        $generaliserModel = Flight::generaliserModel();
+        $data = [
+            'action_id' => (int)$_POST['action_id'] ?? 0,
+            'type_reaction_id' => (int)$_POST['type_reaction_id'] ?? 0,
+            'montant' => (float)$_POST['montant'] ?? 0.0,
+            'statut' => $_POST['statut'] ?? 'en attente'
+            // Note: 'valide_par' and 'date_validation' are not included in the form; handle as needed
+        ];
+
+        try {
+            if (!empty($_POST['id'])) {
+                // Update
+                $generaliserModel->updateTableData('reactions', $data, ['id' => (int)$_POST['id']]);
+                Flight::set('message', 'Réaction mise à jour avec succès.');
+            } else {
+                // Create
+                $generaliserModel->insererDonnee('reactions', $data);
+                Flight::set('message', 'Réaction créée avec succès.');
+            }
+        } catch (\Exception $e) {
+            Flight::set('message', 'Erreur : ' . $e->getMessage());
+        }
+        Flight::redirect('/reaction-client');
+    }
+
+    public function deleteReaction() {
+        $generaliserModel = Flight::generaliserModel();
+        try {
+            $generaliserModel->deleteTableData('reactions', ['id' => (int)$_POST['id']]);
+            Flight::set('message', 'Réaction supprimée avec succès.');
+        } catch (\Exception $e) {
+            Flight::set('message', 'Erreur : ' . $e->getMessage());
+        }
+        Flight::redirect('/reaction-client');
+    }
+
+    
     public function showEffectuerReactionForm()
     {
         $generaliserModel = Flight::generaliserModel();
