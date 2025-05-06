@@ -52,12 +52,20 @@ class ReactionClientController {
         try {
             if (!empty($_POST['id'])) {
                 // Update
-                $generaliserModel->updateTableData('type_reactions', $data, ['id' => (int)$_POST['id']]);
-                Flight::set('message', 'Type de réaction mis à jour avec succès.');
+                $result = $generaliserModel->updateData('type_reactions', $data, ['id' => (int)$_POST['id']]);
+                if ($result['success']) {
+                    Flight::set('message', 'Type de réaction mis à jour avec succès.');
+                } else {
+                    Flight::set('message', 'Erreur lors de la mise à jour : ' . $result['message']);
+                }
             } else {
                 // Create
-                $generaliserModel->insererDonnee('type_reactions', $data);
-                Flight::set('message', 'Type de réaction créé avec succès.');
+                $result = $generaliserModel->insererDonnee('type_reactions', $data);
+                if ($result['status'] === 'success') {
+                    Flight::set('message', 'Type de réaction créé avec succès.');
+                } else {
+                    Flight::set('message', 'Erreur lors de la création : ' . $result['message']);
+                }
             }
         } catch (\Exception $e) {
             Flight::set('message', 'Erreur : ' . $e->getMessage());
@@ -68,8 +76,12 @@ class ReactionClientController {
     public function deleteTypeReaction() {
         $generaliserModel = Flight::generaliserModel();
         try {
-            $generaliserModel->deleteTableData('type_reactions', ['id' => (int)$_POST['id']]);
-            Flight::set('message', 'Type de réaction supprimé avec succès.');
+            $result = $generaliserModel->deleteData('type_reactions', ['id' => (int)$_POST['id']]);
+            if ($result['success']) {
+                Flight::set('message', 'Type de réaction supprimé avec succès.');
+            } else {
+                Flight::set('message', 'Erreur lors de la suppression : ' . $result['message']);
+            }
         } catch (\Exception $e) {
             Flight::set('message', 'Erreur : ' . $e->getMessage());
         }
@@ -83,19 +95,38 @@ class ReactionClientController {
             'action_id' => (int)$_POST['action_id'] ?? 0,
             'type_reaction_id' => (int)$_POST['type_reaction_id'] ?? 0,
             'montant' => (float)$_POST['montant'] ?? 0.0,
-            'statut' => $_POST['statut'] ?? 'en attente'
-            // Note: 'valide_par' and 'date_validation' are not included in the form; handle as needed
+            'statut' => $_POST['statut'] ?? 'en attente',
+            'created_at' => date('Y-m-d H:i:s') // Set created_at for new records
         ];
 
         try {
+            // Validate foreign keys
+            $actionExists = $generaliserModel->getTableData('actions', ['id' => $data['action_id']]);
+            $typeReactionExists = $generaliserModel->getTableData('type_reactions', ['id' => $data['type_reaction_id']]);
+            if (empty($actionExists)) {
+                throw new \Exception('Action invalide.');
+            }
+            if (empty($typeReactionExists)) {
+                throw new \Exception('Type de réaction invalide.');
+            }
+
             if (!empty($_POST['id'])) {
                 // Update
-                $generaliserModel->updateTableData('reactions', $data, ['id' => (int)$_POST['id']]);
-                Flight::set('message', 'Réaction mise à jour avec succès.');
+                unset($data['created_at']); // Do not update created_at
+                $result = $generaliserModel->updateData('reactions', $data, ['id' => (int)$_POST['id']]);
+                if ($result['success']) {
+                    Flight::set('message', 'Réaction mise à jour avec succès.');
+                } else {
+                    Flight::set('message', 'Erreur lors de la mise à jour : ' . $result['message']);
+                }
             } else {
                 // Create
-                $generaliserModel->insererDonnee('reactions', $data);
-                Flight::set('message', 'Réaction créée avec succès.');
+                $result = $generaliserModel->insererDonnee('reactions', $data);
+                if ($result['status'] === 'success') {
+                    Flight::set('message', 'Réaction créée avec succès.');
+                } else {
+                    Flight::set('message', 'Erreur lors de la création : ' . $result['message']);
+                }
             }
         } catch (\Exception $e) {
             Flight::set('message', 'Erreur : ' . $e->getMessage());
@@ -106,56 +137,50 @@ class ReactionClientController {
     public function deleteReaction() {
         $generaliserModel = Flight::generaliserModel();
         try {
-            $generaliserModel->deleteTableData('reactions', ['id' => (int)$_POST['id']]);
-            Flight::set('message', 'Réaction supprimée avec succès.');
+            $result = $generaliserModel->deleteData('reactions', ['id' => (int)$_POST['id']]);
+            if ($result['success']) {
+                Flight::set('message', 'Réaction supprimée avec succès.');
+            } else {
+                Flight::set('message', 'Erreur lors de la suppression : ' . $result['message']);
+            }
         } catch (\Exception $e) {
             Flight::set('message', 'Erreur : ' . $e->getMessage());
         }
         Flight::redirect('/reaction-client');
     }
 
-    
-    public function showEffectuerReactionForm()
-    {
+    // Existing Methods (unchanged)
+    public function showEffectuerReactionForm() {
         $generaliserModel = Flight::generaliserModel();
-    
-        // Récupérer les actions effectuées avec un JOIN pour inclure les informations des actions et des utilisateurs
         $join = [
             ['action', [['action_effectue.action_id', 'action.id']]],
             ['client', [['action_effectue.user_id', 'client.id']]]
         ];
         $actions = $generaliserModel->getTableData('action_effectue', [], [], $join);
-    
-        // Récupérer les réactions
         $reactions = $generaliserModel->getTableData('reaction', []);
-    
-        // Rendre la vue avec les données
         Flight::render('template', [
-            'pageName' => 'effectuer_reaction', 
+            'pageName' => 'effectuer_reaction',
             'pageTitle' => 'Effectuer Réaction',
             'actions' => $actions,
             'reactions' => $reactions
         ]);
     }
 
-    public function importReactionsEffectueesCsv()
-    {
+    public function importReactionsEffectueesCsv() {
         if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] === UPLOAD_ERR_OK) {
             $fileTmpPath = $_FILES['csv_file']['tmp_name'];
             $generaliserModel = Flight::generaliserModel();
             $reactionModel = Flight::reactionModel();
             $result = $generaliserModel->importCsv($fileTmpPath, ',');
-
             if ($result['status'] === 'success') {
                 $data = $result['data'];
                 foreach ($data as $row) {
-                    // CSV doit contenir : reaction_id, action_effectue_id, date_reaction (optionnel)
                     $reactionEffectue = [
                         'reaction_id' => $row['reaction_id'] ?? null,
                         'action_effectue_id' => $row['action_effectue_id'] ?? null,
                         'date_reaction' => $row['date_reaction'] ?? null
                     ];
-                    $reactionModel->reactionEffectueAvecBudget($reactionEffectue["reaction_id"], $reactionEffectue["action_effectue_id"],$reactionEffectue["date_reaction"]);
+                    $reactionModel->reactionEffectueAvecBudget($reactionEffectue["reaction_id"], $reactionEffectue["action_effectue_id"], $reactionEffectue["date_reaction"]);
                 }
                 Flight::set('message', 'Import CSV terminé.');
             } else {
@@ -167,8 +192,7 @@ class ReactionClientController {
         Flight::redirect('/reaction-client');
     }
 
-    public function exportReactionsEffectueesPdf()
-    {
+    public function exportReactionsEffectueesPdf() {
         $generaliserModel = Flight::generaliserModel();
         $join = [
             ['reaction', [['reaction_effectue.reaction_id', 'reaction.id']]],
@@ -176,7 +200,6 @@ class ReactionClientController {
             ['client', [['action_effectue.user_id', 'client.id']]]
         ];
         $reactions = $generaliserModel->getTableData('reaction_effectue', [], [], $join);
-
         require_once('assets/fpdf/fpdf.php');
         $pdf = new \FPDF();
         $pdf->AddPage();
@@ -196,7 +219,8 @@ class ReactionClientController {
             $pdf->MultiCell(90, 8, $r['description'], 1);
             $pdf->SetXY($x + 90, $y);
             $pdf->Cell(30, 8, isset($r['cout']) ? $r['cout'] . ' Ar' : '', 1);
-            $pdf->Cell(40, 8, ($r['nom'] ?? '') . ' ' . ($r['prenom'] ?? ''), 1);
+            $val = ($r['nom'] ?? '') . ' ' . ($r['prenom'] ?? '');
+            $pdf->Cell(40, 8, $val, 1);
             $pdf->Cell(35, 8, $r['date_reaction'] ?? '', 1);
             $pdf->Ln();
         }
@@ -204,27 +228,20 @@ class ReactionClientController {
         exit;
     }
 
-
-    public function importReactionsCsv()
-    {
+    public function importReactionsCsv() {
         if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] === UPLOAD_ERR_OK) {
             $fileTmpPath = $_FILES['csv_file']['tmp_name'];
             $generaliserModel = Flight::generaliserModel();
             $result = $generaliserModel->importCsv($fileTmpPath, ',');
-    
             if ($result['status'] === 'success') {
                 $data = $result['data'];
                 foreach ($data as $row) {
-                    // CSV doit contenir : description, phase
                     $reaction = [
                         'description' => $row['description'] ?? '',
                         'phase' => isset($row['phase']) ? (int)$row['phase'] : null,
-                        'cout' => isset($row['cout']) ? (int)$row['cout'] : null
+                        'cout' => isset($row['cout']) ? (float)$row['cout'] : null
                     ];
-    
-                    // Insérer la réaction
                     $generaliserModel->insererDonnee('reaction', $reaction);
-    
                 }
                 Flight::set('message', 'Import CSV réaction terminé.');
             } else {
@@ -236,8 +253,7 @@ class ReactionClientController {
         Flight::redirect('/reaction-client');
     }
 
-    public function exportReactionsPdf()
-    {
+    public function exportReactionsPdf() {
         $generaliserModel = Flight::generaliserModel();
         $reactions = $generaliserModel->getTableData('reaction', []);
         require_once('assets/fpdf/fpdf.php');
@@ -258,22 +274,14 @@ class ReactionClientController {
         exit;
     }
 
-
-    public function handleEffectuerReactionForm()
-    {
-        // Vérifier si les données du formulaire sont présentes
+    public function handleEffectuerReactionForm() {
         if (isset($_POST['reaction'], $_POST['reaction_date'], $_POST['action_id'])) {
             $reactionId = (int)$_POST['reaction'];
             $reactionDate = $_POST['reaction_date'];
             $actionId = (int)$_POST['action_id'];
-    
-            // Utiliser ReactionModel pour obtenir id_exercice et num_periode
             $reactionModel = Flight::reactionModel();
-    
             try {
-                // Appeler la fonction pour gérer la réaction et le budget
                 $reactionModel->reactionEffectueAvecBudget($reactionId, $actionId, $reactionDate);
-    
                 if (Flight::request()->ajax) {
                     Flight::json(['status' => 'success', 'message' => 'Réaction effectuée avec succès et transaction enregistrée.']);
                 } else {
@@ -298,9 +306,7 @@ class ReactionClientController {
         }
     }
 
-
-    function afficherListeReactionPending()
-    {
+    public function afficherListeReactionPending() {
         $generaliserModel = Flight::generaliserModel();
         $join = [
             ['reaction_effectue_validation', [['reaction_effectue.id', 'reaction_effectue_validation.reaction_effectue_id']]],
@@ -308,14 +314,8 @@ class ReactionClientController {
             ['action_effectue', [['reaction_effectue.action_effectue_id', 'action_effectue.id']]],
             ['client', [['action_effectue.user_id', 'client.id']]]
         ];
-    
-        // Ajouter la condition pour que reaction_effectue_validation.status = 0
         $conditions = ['reaction_effectue_validation.status' => 0];
-    
-        // Récupérer les données avec les conditions et les jointures
         $reactions = $generaliserModel->getTableData('reaction_effectue', $conditions, [], $join);
-    
-        // Rendre la vue avec les données
         Flight::render('template', [
             'pageName' => 'liste_reaction_pending',
             'pageTitle' => 'Liste des Réactions en Attente',
@@ -323,9 +323,7 @@ class ReactionClientController {
         ]);
     }
 
-
-    public function validerReaction()
-    {
+    public function validerReaction() {
         $reactionEffectueId = (int)$_POST['reaction_effectue_id'];
         if (empty($reactionEffectueId)) {
             Flight::set('message', 'Erreur : ID de la réaction effectuée manquant.');
@@ -334,60 +332,43 @@ class ReactionClientController {
         }
         $generaliserModel = Flight::generaliserModel();
         $reactionModel = Flight::reactionModel();
-    
-        // Récupérer les informations de la réaction effectuée
         $join = [
             ['reaction', [['reaction_effectue.reaction_id', 'reaction.id']]],
         ];
         $reactionEffectue = $generaliserModel->getTableData('reaction_effectue', ['reaction_effectue.id' => $reactionEffectueId], [], $join);
-    
         if (empty($reactionEffectue)) {
             Flight::set('message', 'Erreur : Réaction effectuée introuvable.');
             Flight::redirect('/reaction-client/liste-reaction-pending');
             return;
         }
-    
-        $reactionEffectue = $reactionEffectue[0]; // Récupérer la première ligne
+        $reactionEffectue = $reactionEffectue[0];
         $dateReaction = $reactionEffectue['date_reaction'];
         $coutReaction = $reactionEffectue['cout'];
-    
-        // Obtenir l'exercice et le numéro de période correspondant à la date de la réaction
         $exerciseId = $reactionModel->getExerciseIdByDate($dateReaction);
         $periodNum = $reactionModel->getPeriodNumberByDate($dateReaction);
-    
         if ($exerciseId === null || $periodNum === null) {
             Flight::set('message', 'Erreur : Impossible de déterminer l\'exercice ou la période pour la date donnée.');
             Flight::redirect('/reaction-client/liste-reaction-pending');
             return;
         }
-    
-        // Récupérer l'ID du budget_element pour le département CRM (department_id = 4)
         $budgetElement = $generaliserModel->getTableData('budget_element', ['department_id' => 4]);
-    
         if (empty($budgetElement)) {
             Flight::set('message', 'Erreur : Budget élément pour le département CRM introuvable.');
             Flight::redirect('/reaction-client/liste-reaction-pending');
             return;
         }
-    
         $budgetElementId = $budgetElement[0]['budget_element_id'];
-    
-        // Vérifier si une transaction existe déjà pour cet exercice, période et budget_element
         $transaction = $generaliserModel->getTableData('transaction', [
             'exercise_id' => $exerciseId,
             'period_num' => $periodNum,
             'budget_element_id' => $budgetElementId,
-            'nature' => 2 // Réalisation
+            'nature' => 2
         ]);
-    
         if (!empty($transaction)) {
-            // Mettre à jour le montant de la transaction existante
             $transactionId = $transaction[0]['transaction_id'];
             $newAmount = $transaction[0]['amount'] + $coutReaction;
-    
-            $generaliserModel->updateTableData('transaction', ['amount' => $newAmount], ['transaction_id' => $transactionId]);
+            $generaliserModel->updateData('transaction', ['amount' => $newAmount], ['transaction_id' => $transactionId]);
         } else {
-            // Insérer une nouvelle transaction
             $generaliserModel->insererDonnee('transaction', [
                 'nature' => 2,
                 'exercise_id' => $exerciseId,
@@ -398,25 +379,21 @@ class ReactionClientController {
                 'priority_id' => 2
             ]);
         }
-    
-        // Mettre à jour le statut de la réaction effectuée à validée
-        $generaliserModel->updateTableData('reaction_effectue_validation', ['status' => 1], ['reaction_effectue_id' => $reactionEffectueId]);
-    
+        $generaliserModel->updateData('reaction_effectue_validation', ['status' => 1], ['reaction_effectue_id' => $reactionEffectueId]);
         Flight::set('message', 'Réaction validée avec succès.');
         Flight::redirect('/reaction-client/liste-reaction-pending');
     }
 
-    public function refuserReaction()
-{
-    if (isset($_POST['reaction_effectue_id'])) {
-        $reactionEffectueId = (int)$_POST['reaction_effectue_id'];
-        $generaliserModel = Flight::generaliserModel();
-        $generaliserModel->updateDonnee('reaction_effectue_validation', ['status' => -1], ['reaction_effectue_id' => $reactionEffectueId]);
-        Flight::set('message', 'Réaction refusée avec succès.');
-        Flight::redirect('/reaction-client/liste-reaction-pending');
-    } else {
-        Flight::set('message', 'Erreur : ID de la réaction manquant.');
-        Flight::redirect('/reaction-client/liste-reaction-pending');
+    public function refuserReaction() {
+        if (isset($_POST['reaction_effectue_id'])) {
+            $reactionEffectueId = (int)$_POST['reaction_effectue_id'];
+            $generaliserModel = Flight::generaliserModel();
+            $generaliserModel->updateData('reaction_effectue_validation', ['status' => -1], ['reaction_effectue_id' => $reactionEffectueId]);
+            Flight::set('message', 'Réaction refusée avec succès.');
+            Flight::redirect('/reaction-client/liste-reaction-pending');
+        } else {
+            Flight::set('message', 'Erreur : ID de la réaction manquant.');
+            Flight::redirect('/reaction-client_requestPending');
+        }
     }
-}
 }

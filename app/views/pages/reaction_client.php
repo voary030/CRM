@@ -24,7 +24,7 @@
                             </div>
                             <div class="card-body">
                                 <!-- Form for Creating/Updating Type Reactions -->
-                                <form method="post" action="/reaction-client/type-reaction/save" id="typeReactionForm">
+                                <form method="post" action="<?= htmlspecialchars(Flight::get('flight.base_url') . '/reaction-client/type-reaction/save') ?>" id="typeReactionForm">
                                     <input type="hidden" name="id" id="type_reaction_id">
                                     <div class="row">
                                         <div class="col-md-6">
@@ -65,7 +65,7 @@
                                                     <td><?= $type['besoin_validation'] ? 'Oui' : 'Non' ?></td>
                                                     <td>
                                                         <button class="btn btn-warning btn-sm" onclick="editTypeReaction(<?= $type['id'] ?>, '<?= htmlspecialchars($type['description']) ?>', <?= $type['besoin_validation'] ?>)">Modifier</button>
-                                                        <form action="/reaction-client/type-reaction/delete" method="post" style="display:inline;">
+                                                        <form action="<?= htmlspecialchars(Flight::get('flight.base_url') . '/reaction-client/type-reaction/delete') ?>" method="post" style="display:inline;">
                                                             <input type="hidden" name="id" value="<?= $type['id'] ?>">
                                                             <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Confirmer la suppression ?')">Supprimer</button>
                                                         </form>
@@ -91,7 +91,7 @@
                             </div>
                             <div class="card-body">
                                 <!-- Form for Creating/Updating Reactions -->
-                                <form method="post" action="/reaction-client/reaction/save" id="reactionForm">
+                                <form method="post" action="<?= htmlspecialchars(Flight::get('flight.base_url') . '/reaction-client/reaction/save') ?>" id="reactionForm">
                                     <input type="hidden" name="id" id="reaction_id">
                                     <div class="row">
                                         <div class="col-md-3">
@@ -159,7 +159,7 @@
                                                     <td><?= htmlspecialchars($reaction['statut']) ?></td>
                                                     <td>
                                                         <button class="btn btn-warning btn-sm" onclick="editReaction(<?= $reaction['id'] ?>, <?= $reaction['action_id'] ?>, <?= $reaction['type_reaction_id'] ?>, <?= $reaction['montant'] ?>, '<?= $reaction['statut'] ?>')">Modifier</button>
-                                                        <form action="/reaction-client/reaction/delete" method="post" style="display:inline;">
+                                                        <form action="<?= htmlspecialchars(Flight::get('flight.base_url') . '/reaction-client/reaction/delete') ?>" method="post" style="display:inline;">
                                                             <input type="hidden" name="id" value="<?= $reaction['id'] ?>">
                                                             <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Confirmer la suppression ?')">Supprimer</button>
                                                         </form>
