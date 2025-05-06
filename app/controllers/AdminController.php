@@ -5,12 +5,13 @@ namespace app\controllers;
 use Flight;
 use FPDF;
 
-class AdminController {
+class AdminController
+{
 
-    public function __construct() {
-    }
+    public function __construct() {}
 
-    public function getAdmin() {
+    public function getAdmin()
+    {
         if (!isset($_SESSION['department_id'])) {
             Flight::redirect('/');
             exit;
@@ -23,22 +24,12 @@ class AdminController {
             ['exercise', [['transaction.exercise_id', 'exercise.exercise_id']]],
             ['priority', [['transaction.priority_id', 'priority.priority_id']]],
         ];
-        $transactions = $generaliserModel->getTableData('transaction', ['status' => 0,'budget_element_is_deleted'=>0, 'exercise_is_deleted'=>0], [], $join);
+        $transactions = $generaliserModel->getTableData('transaction', ['status' => 0, 'budget_element_is_deleted' => 0, 'exercise_is_deleted' => 0], [], $join);
         $exercises = $generaliserModel->getTableData('exercise', ['exercise_is_deleted' => 0]);
         $departments = $generaliserModel->getTableData('department', ['department_is_deleted' => 0]);
         $types = $generaliserModel->getTableData('type', ['type_is_deleted' => 0]);
         $selectedExercise = Flight::request()->query->exercise ?? null;
         $budgetData = $selectedExercise ? $this->getBudgetData($selectedExercise) : [];
-        $data = [
-            'categories' => $categories,
-            'transactions' => $transactions,
-            'exercises' => $exercises,
-            'types' => $types,
-            'departments' => $departments,
-            'selectedExercise' => $selectedExercise,
-            'budgetData' => $budgetData,
-            'message' => Flight::get('message')
-        ];
         Flight::render('template', [
             'pageName' => 'admin',
             'pageTitle' => 'Admin Page',
@@ -53,7 +44,8 @@ class AdminController {
         ]);
     }
 
-    public function insertDepartment() {
+    public function insertDepartment()
+    {
         $name = Flight::request()->data->name;
         $generaliserModel = Flight::generaliserModel();
         $result = $generaliserModel->insererDonnee('department', ['name' => $name]);
@@ -71,46 +63,53 @@ class AdminController {
         }
     }
 
-    public function updateDepartment() {
+    public function updateDepartment()
+    {
         $id = Flight::request()->data->id;
         $name = Flight::request()->data->name;
         Flight::generaliserModel()->updateTableData('department', ['name' => $name], ['department_id' => $id]);
         Flight::json(['success' => true, 'message' => 'Department updated successfully.']);
     }
 
-    public function deleteDepartment() {
+    public function deleteDepartment()
+    {
         $id = Flight::request()->data->id;
         Flight::generaliserModel()->updateTableData('department', ['department_is_deleted' => 1], ['department_id' => $id]);
         Flight::json(['success' => true, 'message' => 'Department deleted successfully.']);
     }
 
-    public function insertType() {
+    public function insertType()
+    {
         $name = Flight::request()->data->name;
         Flight::generaliserModel()->insererDonnee('type', ['name' => $name]);
         Flight::json(['success' => true, 'message' => 'Type created successfully.']);
     }
 
-    public function updateType() {
+    public function updateType()
+    {
         $id = Flight::request()->data->id;
         $name = Flight::request()->data->name;
         Flight::generaliserModel()->updateTableData('type', ['name' => $name], ['type_id' => $id]);
         Flight::json(['success' => true, 'message' => 'Type updated successfully.']);
     }
 
-    public function deleteType() {
+    public function deleteType()
+    {
         $id = Flight::request()->data->id;
         Flight::generaliserModel()->updateTableData('type', ['type_is_deleted' => 1], ['type_id' => $id]);
         Flight::json(['success' => true, 'message' => 'Type deleted successfully.']);
     }
 
-    public function getBudgetData2() {
+    public function getBudgetData2()
+    {
         $exerciseId = Flight::request()->query->exercise;
         $budgetData = $this->getBudgetData($exerciseId);
         $budgetData['selectedExercise'] = $exerciseId;
         Flight::json($budgetData);
     }
 
-    public function insertExercise() {
+    public function insertExercise()
+    {
         $generaliserModel = Flight::generaliserModel();
         $startDate = Flight::request()->data->start_date;
         $nbPeriod = Flight::request()->data->nb_period;
@@ -132,19 +131,19 @@ class AdminController {
                         'budget_element_id' => $element['budget_element_id'],
                         'exercise_id' => $exerciseId,
                         'period_num' => $i,
-                        'nature' => 1, 
+                        'nature' => 1,
                         'amount' => 0,
                         'status' => 1,
-                        'priority_id' => 1 
+                        'priority_id' => 1
                     ];
                     $transactions[] = [
                         'budget_element_id' => $element['budget_element_id'],
                         'exercise_id' => $exerciseId,
                         'period_num' => $i,
-                        'nature' => 2, 
+                        'nature' => 2,
                         'amount' => 0,
                         'status' => 1,
-                        'priority_id' => 1 
+                        'priority_id' => 1
                     ];
                 }
             }
@@ -157,7 +156,8 @@ class AdminController {
         }
     }
 
-    public function updateExercise() {
+    public function updateExercise()
+    {
         $id = Flight::request()->data->id;
         $start_date = Flight::request()->data->start_date;
         $nb_period = Flight::request()->data->nb_period;
@@ -179,10 +179,10 @@ class AdminController {
                         'budget_element_id' => $element['budget_element_id'],
                         'exercise_id' => $id,
                         'period_num' => $i,
-                        'nature' => 1, 
+                        'nature' => 1,
                         'amount' => 0,
                         'status' => 1,
-                        'priority_id' => 1 
+                        'priority_id' => 1
                     ];
                     $transactions[] = [
                         'budget_element_id' => $element['budget_element_id'],
@@ -203,14 +203,16 @@ class AdminController {
 
         Flight::json(['success' => true, 'message' => 'Exercise updated successfully.']);
     }
-    
-    public function deleteExercise() {
+
+    public function deleteExercise()
+    {
         $id = Flight::request()->data->id;
         Flight::generaliserModel()->updateTableData('exercise', ['exercise_is_deleted' => 1], ['exercise_id' => $id]);
         Flight::json(['success' => true, 'message' => 'Exercise deleted successfully.']);
     }
 
-    public function confirmTransaction() {
+    public function confirmTransaction()
+    {
         $transactionId = Flight::request()->data->transaction_id;
 
         $generaliserModel = Flight::generaliserModel();
@@ -223,7 +225,8 @@ class AdminController {
         }
     }
 
-    public function updateTransactions() {
+    public function updateTransactions()
+    {
         $generaliserModel = Flight::generaliserModel();
         $transactions = Flight::request()->data->transactions;
 
@@ -248,7 +251,8 @@ class AdminController {
         Flight::redirect('admin');
     }
 
-    public function importDepartmentsCsv() {
+    public function importDepartmentsCsv()
+    {
         $generaliserModel = Flight::generaliserModel();
         $csvFilePath = $_FILES['csv_file']['tmp_name'];
 
@@ -265,7 +269,8 @@ class AdminController {
         Flight::redirect('admin');
     }
 
-    public function importTypesCsv() {
+    public function importTypesCsv()
+    {
         $generaliserModel = Flight::generaliserModel();
         $csvFilePath = $_FILES['csv_file']['tmp_name'];
 
@@ -286,7 +291,8 @@ class AdminController {
         Flight::redirect('admin');
     }
 
-    public function importExercisesCsv() {
+    public function importExercisesCsv()
+    {
         $generaliserModel = Flight::generaliserModel();
         $csvFilePath = $_FILES['csv_file']['tmp_name'];
 
@@ -298,8 +304,8 @@ class AdminController {
                 $result = $generaliserModel->insererDonnee('exercise', $exercise);
                 $last_id = $generaliserModel->getLastInsertedId('exercise', 'exercise_id');
                 if ($result['status'] == 'success') {
-                    $exerciseId = $last_id['last_id']; 
-                    $budgetElements = $generaliserModel->getTableData('budget_element', ['budget_element_is_deleted'=>0]);
+                    $exerciseId = $last_id['last_id'];
+                    $budgetElements = $generaliserModel->getTableData('budget_element', ['budget_element_is_deleted' => 0]);
                     $transactions = [];
                     for ($i = 1; $i <= $exercise['nb_period']; $i++) {
                         foreach ($budgetElements as $element) {
@@ -336,9 +342,10 @@ class AdminController {
         Flight::redirect('admin');
     }
 
-    private function getBudgetData($exerciseId) {
+    private function getBudgetData($exerciseId)
+    {
         $generaliserModel = Flight::generaliserModel();
-        $exercise = $generaliserModel->getTableData('exercise', ['exercise_id' => $exerciseId, 'exercise_is_deleted'=> 0])[0];
+        $exercise = $generaliserModel->getTableData('exercise', ['exercise_id' => $exerciseId, 'exercise_is_deleted' => 0])[0];
         $nbPeriod = $exercise['nb_period'];
         $startBalance = $exercise['start_balance'];
 
@@ -361,7 +368,7 @@ class AdminController {
 
         $categories = $generaliserModel->getTableData('category', []);
         foreach ($categories as $category) {
-            $elements = $generaliserModel->getTableData('budget_element', ['category_id' => $category['category_id'], 'budget_element_is_deleted'=>0]);
+            $elements = $generaliserModel->getTableData('budget_element', ['category_id' => $category['category_id'], 'budget_element_is_deleted' => 0]);
             foreach ($elements as $element) {
                 $department = $generaliserModel->getTableData('department', ['department_id' => $element['department_id']])[0]['name'] ?? 'Unknown';
                 $type = $generaliserModel->getTableData('type', ['type_id' => $element['type_id']])[0]['name'] ?? 'Unknown';
@@ -369,7 +376,7 @@ class AdminController {
                     'category' => $category['name'],
                     'description' => $element['description'],
                     'id' => $element['budget_element_id'],
-                    'department' => $department, 
+                    'department' => $department,
                     'type' => $type
                 ];
 
@@ -378,11 +385,11 @@ class AdminController {
                         'prevision' => 0,
                         'realisation' => 0,
                         'ecart' => 0,
-                        'statusR'=>0,
-                        'statusP'=>0
+                        'statusR' => 0,
+                        'statusP' => 0
                     ];
 
-                    $transactions = $generaliserModel->getTableData('transaction', ['exercise_id' => $exerciseId, 'status'=>1,'period_num' => $i, 'budget_element_id' => $element['budget_element_id']]);
+                    $transactions = $generaliserModel->getTableData('transaction', ['exercise_id' => $exerciseId, 'status' => 1, 'period_num' => $i, 'budget_element_id' => $element['budget_element_id']]);
                     foreach ($transactions as $transaction) {
                         if ($transaction['status'] == 1) {
                             if ($transaction['nature'] == 1) {
@@ -393,11 +400,11 @@ class AdminController {
                                     $periodData['prevision'] -= (float)$transaction['amount'];
                                     $periodData['statusP'] = $transaction['status'];
                                 }
-                            } else { 
-                                if ($category['category_id'] == 1) { 
+                            } else {
+                                if ($category['category_id'] == 1) {
                                     $periodData['realisation'] += (float)$transaction['amount'];
                                     $periodData['statusR'] = $transaction['status'];
-                                } else { 
+                                } else {
                                     $periodData['realisation'] -= (float)$transaction['amount'];
                                     $periodData['statusR'] = $transaction['status'];
                                 }
@@ -405,11 +412,10 @@ class AdminController {
                         }
                     }
 
-                    if($category['category_id'] == 1){
+                    if ($category['category_id'] == 1) {
                         $periodData['ecart'] = $periodData['prevision'] - $periodData['realisation'];
-                    }
-                    else{
-                        $periodData['ecart'] = (-1*$periodData['prevision']) - (-1*$periodData['realisation']);
+                    } else {
+                        $periodData['ecart'] = (-1 * $periodData['prevision']) - (-1 * $periodData['realisation']);
                     }
                     $line["period_{$i}_prevision"] = $periodData['prevision'];
                     $line["period_{$i}_realisation"] = $periodData['realisation'];
@@ -427,7 +433,7 @@ class AdminController {
             $totalRealisation = 0;
 
             foreach ($budgetData['lines'] as $index => $line) {
-                if (isset($line["period_{$i}_prevision"])) { 
+                if (isset($line["period_{$i}_prevision"])) {
                     $totalPrevision += (float)$line["period_{$i}_prevision"];
                     $totalRealisation += (float)$line["period_{$i}_realisation"];
                 }
@@ -455,7 +461,8 @@ class AdminController {
 
         return $budgetData;
     }
-    public function importTransactionsCsv() {
+    public function importTransactionsCsv()
+    {
         if (isset($_FILES['transactions_csv']) && $_FILES['transactions_csv']['error'] === UPLOAD_ERR_OK) {
             $fileTmpPath = $_FILES['transactions_csv']['tmp_name'];
             $generaliserModel = Flight::generaliserModel();
@@ -486,7 +493,8 @@ class AdminController {
         Flight::redirect('admin');
     }
 
-    public function exportBudgetDataCsv() {
+    public function exportBudgetDataCsv()
+    {
         $exerciseId = Flight::request()->data->exercise;
         $budgetData = $this->getBudgetData($exerciseId);
         $csvData = [];
@@ -500,7 +508,7 @@ class AdminController {
 
         $startBalanceRow = ['Solde depart', ''];
         for ($i = 1; $i <= $budgetData['nb_period']; $i++) {
-            $startBalanceRow[] = $budgetData['start_balance'][$i-1];
+            $startBalanceRow[] = $budgetData['start_balance'][$i - 1];
             $startBalanceRow[] = '';
             $startBalanceRow[] = '';
         }
@@ -546,10 +554,11 @@ class AdminController {
         exit;
     }
 
-    public function exportBudgetDataPdf() {
+    public function exportBudgetDataPdf()
+    {
         $exerciseId = Flight::request()->query->exercise;
         $budgetData = $this->getBudgetData($exerciseId);
-        $exercise = Flight::generaliserModel()->getTableData('exercise', ['exercise_id' => $exerciseId, 'exercise_is_deleted'=>0])[0];
+        $exercise = Flight::generaliserModel()->getTableData('exercise', ['exercise_id' => $exerciseId, 'exercise_is_deleted' => 0])[0];
         $exerciseYear = date('Y', strtotime($exercise['start_date']));
         require('assets/fpdf/fpdf.php');
         $pdf = new FPDF();
@@ -557,8 +566,8 @@ class AdminController {
         $pdf->SetFont('Arial', 'B', 10);
         $pdf->Cell(0, 10, 'Budget Monitoring - ' . $exerciseYear, 0, 1, 'C');
         $pdf->Ln(10);
-        $numColumns = 2 + 3 * $budgetData['nb_period']; 
-        $maxWidth = 190; 
+        $numColumns = 2 + 3 * $budgetData['nb_period'];
+        $maxWidth = 190;
         $cellWidth = $maxWidth / $numColumns;
         $pdf->SetFont('Arial', 'B', 8);
         $pdf->Cell($cellWidth, 10, 'Category', 1, 0, 'C');
@@ -573,7 +582,7 @@ class AdminController {
         $pdf->Cell($cellWidth, 10, 'Solde D', 1);
         $pdf->Cell($cellWidth, 10, '', 1);
         for ($i = 1; $i <= $budgetData['nb_period']; $i++) {
-            $pdf->Cell($cellWidth, 10, $budgetData['start_balance'][$i-1], 1, 0, 'R');
+            $pdf->Cell($cellWidth, 10, $budgetData['start_balance'][$i - 1], 1, 0, 'R');
             $pdf->Cell($cellWidth, 10, '', 1);
             $pdf->Cell($cellWidth, 10, '', 1);
         }
@@ -613,7 +622,8 @@ class AdminController {
         exit;
     }
 
-    public function exportListsPdf() {
+    public function exportListsPdf()
+    {
         $generaliserModel = Flight::generaliserModel();
         $departments = $generaliserModel->getTableData('department', ['department_is_deleted' => 0]);
         $categories = $generaliserModel->getTableData('category', []);
